@@ -4,6 +4,7 @@ import asyncio
 import re
 from abc import ABC, abstractmethod
 from typing import List
+from urllib.parse import urlparse, urlunparse, urljoin
 
 from aiohttp import ClientSession
 from bs4 import BeautifulSoup
@@ -50,7 +51,7 @@ class RegexScraper(Scraper):
                 links = re.findall(r'href=[\'"]?([^\'" >]+)', str(content))
                 links = list(filter(lambda link: not link.startswith(('javascript:', 'mailto:', '#')), links))
 
-                return links
+                return [urljoin(url, link) for link in links]
             except UnicodeDecodeError:
                 return []
 
@@ -72,7 +73,7 @@ class BSoupScraper(Scraper):
                 links = [link.get('href') for link in soup.findAll('a')]
                 links = list(filter(lambda link: link is not None and not link.startswith(('javascript:', 'mailto:', '#')), links))
 
-                return links
+                return [urljoin(url, link) for link in links]
             except UnicodeDecodeError:
                 return []
 
