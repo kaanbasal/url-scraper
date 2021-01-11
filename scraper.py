@@ -4,9 +4,9 @@ import asyncio
 import re
 from abc import ABC, abstractmethod
 from typing import List
-from urllib.parse import urlparse, urlunparse, urljoin
+from urllib.parse import urljoin
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from bs4 import BeautifulSoup
 from requests_html import AsyncHTMLSession, BaseParser
 
@@ -40,19 +40,19 @@ class RegexScraper(Scraper):
         super().__init__()
 
     async def scrape_url(self, url: str) -> List[str]:
-        async with ClientSession(loop=asyncio.get_running_loop()) as client:
-            result = await client.get(url)
-
-            if not result.ok:
-                return []
-
+        async with ClientSession(loop=asyncio.get_running_loop(), timeout=ClientTimeout(total=5)) as client:
             try:
+                result = await client.get(url)
+
+                if not result.ok:
+                    return []
+
                 content = await result.read()
                 links = re.findall(r'href=[\'"]?([^\'" >]+)', str(content))
                 links = list(filter(lambda link: not link.startswith(('javascript:', 'mailto:', '#')), links))
 
                 return [urljoin(url, link) for link in links]
-            except UnicodeDecodeError:
+            except Exception as e:
                 return []
 
 
@@ -60,13 +60,13 @@ class BSoupScraper(Scraper):
     TYPE = 'beautifulsoup'
 
     async def scrape_url(self, url: str) -> List[str]:
-        async with ClientSession(loop=asyncio.get_running_loop()) as client:
-            result = await client.get(url)
-
-            if not result.ok:
-                return []
-
+        async with ClientSession(loop=asyncio.get_running_loop(), timeout=ClientTimeout(total=5)) as client:
             try:
+                result = await client.get(url)
+
+                if not result.ok:
+                    return []
+
                 content = await result.read()
                 soup = BeautifulSoup(str(content), 'lxml')
 
@@ -74,7 +74,7 @@ class BSoupScraper(Scraper):
                 links = list(filter(lambda link: link is not None and not link.startswith(('javascript:', 'mailto:', '#')), links))
 
                 return [urljoin(url, link) for link in links]
-            except UnicodeDecodeError:
+            except Exception as e:
                 return []
 
 
