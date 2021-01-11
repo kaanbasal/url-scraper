@@ -1,6 +1,6 @@
 ## Url Scrapper
 
-The code tries to fetch given url recursively to fetch all the links and lists them.
+The code tries to fetch given url recursively to find all the links and lists them.
 
 Implementation has several approaches to do the same thing.
 
